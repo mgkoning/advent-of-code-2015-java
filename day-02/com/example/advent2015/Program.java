@@ -1,26 +1,30 @@
 package com.example.advent2015;
 
 import java.nio.file.*;
-import java.util.Arrays;
-import java.util.stream.IntStream;
+import java.util.*;
+import java.util.stream.*;
+import java.util.function.*;
 import static java.util.stream.Collectors.*;
 import static java.lang.Math.*;
 
 public class Program {
   public static void main(String... args) throws java.io.IOException {
-    var out = System.out;
     var presents = Files.lines(Path.of("../input/day02.txt"))
       .map(Program::toPresent).collect(toList());
     
-    out.println("Part 1:");
-    out.println(presents.stream().mapToInt(p -> p.requiredPaper()).sum());
-    out.println("Part 2:");
-    out.println(presents.stream().mapToInt(p -> p.requiredRibbon()).sum());
+    System.out.println("Part 1:");
+    System.out.println(getAnswer(presents, Present::requiredPaper));
+    System.out.println("Part 2:");
+    System.out.println(getAnswer(presents, Present::requiredRibbon));
   }
 
   private static Present toPresent(String spec) {
     var dimensions = Arrays.stream(spec.split("x")).mapToInt(Integer::parseInt).toArray();
     return new Present(dimensions);
+  }
+
+  private static int getAnswer(List<Present> presents, ToIntFunction<Present> selector) {
+    return presents.stream().mapToInt(selector).sum();
   }
 }
 
@@ -31,7 +35,7 @@ class Present {
     h = sides[2];
     sortedSides = IntStream.of(sides).sorted().toArray();
   }
-  private int l, w, h;
+  private final int l, w, h;
   private final int[] sortedSides;
   public int smallestSide() { return sortedSides[0] * sortedSides[1]; }
   public int requiredPaper() {
