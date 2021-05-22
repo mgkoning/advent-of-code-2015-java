@@ -7,9 +7,11 @@ import static java.lang.Math.*;
 
 public class Program {
   public static void main(String... args) throws java.io.IOException {
-    var lines = Files.lines(Path.of("../input/day05.txt"));
+    var lines = Files.readAllLines(Path.of("../input/day05.txt"));
     System.out.println("Part 1:");
-    System.out.println(lines.filter(Program::isNiceLegacy).count());
+    System.out.println(lines.stream().filter(Program::isNiceLegacy).count());
+    System.out.println("Part 2:");
+    System.out.println(lines.stream().filter(Program::isNiceModern).count());
   }
 
   static List<String> _substringBlacklist = Arrays.asList("ab", "cd", "pq", "xy");
@@ -18,7 +20,43 @@ public class Program {
   static boolean isNiceLegacy(String s) {
     if (_substringBlacklist.stream().anyMatch(b -> s.contains(b))) { return false; }
     if (asCharStream(s).filter(c -> _vowels.contains(c)).count() < 3) { return false; }
-    return hasRepeat(s);
+    return has2Palindrome(s);
+  }
+
+  static boolean has2Palindrome(String s) {
+    if (s.length() < 1) { return false; }
+    return toStream(zip(asIterable(s), asIterable(s.substring(1))))
+      .anyMatch(t -> t.fst == t.snd);
+
+    // if (s.length() < 1) { return false; }
+    // var previous = s.charAt(0);
+    // for(char c: s.substring(1).toCharArray()) {
+    //   if (c == previous) { return true; }
+    //   previous = c;
+    // }
+    // return false;
+  }
+
+  static boolean isNiceModern(String s) {
+    return has3Palindrome(s) && hasRepeated2String(s);
+  }
+
+  static boolean has3Palindrome(String s) {
+    if (s.length() < 2) { return false; }
+    return toStream(zip3(
+      asIterable(s), asIterable(s.substring(1)), asIterable(s.substring(2))
+    )).anyMatch(t -> t.fst == t.trd);
+  }
+
+  static boolean hasRepeated2String(String str) {
+    return IntStream.range(0, str.length())
+      .mapToObj(i -> str.substring(i))
+      .anyMatch(s -> prefixRepeats(s, 2));
+  }
+
+  static boolean prefixRepeats(String s, int prefixLength) {
+    return prefixLength <= s.length() && 
+      s.substring(prefixLength).contains(s.substring(0, prefixLength));
   }
 
   static Stream<Character> asCharStream(CharSequence s) {
@@ -29,20 +67,15 @@ public class Program {
     return asCharStream(s).collect(toList());
   }
 
-  static boolean hasRepeat(String s) {
-    if (s.length() < 1) { return false; }
-    return StreamSupport.stream(
-      zip(asIterable(s), asIterable(s.substring(1)), (l, r) -> l == r).spliterator(),
-      true
-    ).anyMatch(c -> c);
+  static <T> Stream<T> toStream(Iterable<T> iterable) {
+    return StreamSupport.stream(iterable.spliterator(), false);
+  }
 
-    // if (s.length() < 1) { return false; }
-    // var previous = s.charAt(0);
-    // for(char c: s.substring(1).toCharArray()) {
-    //   if (c == previous) { return true; }
-    //   previous = c;
-    // }
-    // return false;
+  record Tuple<T, U>(T fst, U snd) { }
+  record Tuple3<T, U, V>(T fst, U snd, V trd) { }
+
+  static <T, U> Iterable<Tuple<T, U>> zip(Iterable<T> left, Iterable<U> right) {
+    return zip(left, right, (l, r) -> new Tuple<>(l, r));
   }
 
   static <T, U, R> Iterable<R> zip(
@@ -55,6 +88,27 @@ public class Program {
       public R next() { return combine.apply(l.next(), r.next()); }
     };
     return () -> zipIterator;
+  }
+
+  @FunctionalInterface
+  interface TriFunction<T, U, V, R> { R apply(T t, U u, V v); }
+
+  static <T, U, V> Iterable<Tuple3<T, U, V>> zip3(Iterable<T> ts, Iterable<U> us, Iterable<V> vs) {
+    return zip3(ts, us, vs, (t, u, v) -> new Tuple3<>(t, u, v));
+  }
+
+  static <T, U, V, R> Iterable<R> zip3(
+    Iterable<T> ts, Iterable<U> us, Iterable<V> vs,
+    TriFunction<? super T, ? super U, ? super V, R> combine
+  ) {
+    var zip3Iterator = new Iterator<R>() {
+      Iterator<T> t = ts.iterator();
+      Iterator<U> u = us.iterator();
+      Iterator<V> v = vs.iterator();
+      public boolean hasNext() { return t.hasNext() && u.hasNext() && v.hasNext(); }
+      public R next() { return combine.apply(t.next(), u.next(), v.next()); }
+    };
+    return () -> zip3Iterator;
   }
 
 }
