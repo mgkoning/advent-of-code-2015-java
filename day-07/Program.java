@@ -33,8 +33,7 @@ public class Program {
         .collect(toList()),
       sortedWires
     );
-    var part2 = wireValues2.get(wireA);
-    System.out.println(part2);
+    System.out.println(wireValues2.get(wireA));
   }
 
   record Edge(Wire from, Wire to) { };
@@ -132,7 +131,7 @@ public class Program {
 
     static Optional<Connectable> parseConnectable(String s) {
       if (literal.matcher(s).matches()) {
-        return tryParse(s).flatMap(i -> Optional.of(new Literal(i.intValue())));
+        return tryParse(s).map(i -> new Literal(i.intValue()));
       }
       if (wire.matcher(s).matches()) { return Optional.of(new Wire(s)); }
       var notMatcher = notOp.matcher(s);
