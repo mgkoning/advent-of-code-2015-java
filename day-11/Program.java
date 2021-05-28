@@ -10,7 +10,6 @@ import static java.lang.Math.*;
 public class Program {
   public static void main(String... args) throws java.io.IOException {
     var input = Files.readString(Path.of("../input/day11.txt"));
-    System.out.println(input);
     System.out.println("Part 1:");
     var part1 = nextPassword(input);
     System.out.println(part1);
